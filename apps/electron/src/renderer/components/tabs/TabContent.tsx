@@ -15,10 +15,23 @@ import { PreviewTabContent } from '@/components/diff/PreviewTabContent'
 import { MarkdownRichEditor } from '@/components/diff/MarkdownRichEditor'
 import { MarkdownToc } from '@/components/diff/MarkdownToc'
 import { ScratchPadView } from '@/components/scratch-pad/ScratchPadView'
+import { QuickWorkspace } from '@/components/nanju'
 import { TabErrorBoundary } from './TabErrorBoundary'
 
 export interface TabContentProps {
   tabId: string
+}
+
+/**
+ * Nanju 占位 Tab 的提示文案。
+ * Sprint 1 仅 'quick-workspace' 真实渲染（QuickWorkspace 组件），
+ * 其余三类（长期迭代型工作区 / 我的项目 / 分析看板）预留占位分支，后续 Sprint 接入。
+ * 对应 sprint-plan S1-T1.6（渲染分支占位）。
+ */
+const NANJU_TAB_PLACEHOLDER_LABEL: Record<'long-workspace' | 'project-list' | 'analytics', string> = {
+  'long-workspace': '长期迭代型工作区（建设中 · S1-T3.5）',
+  'project-list': '我的项目（建设中 · S1-T8）',
+  analytics: '分析看板（建设中 · S2-T8）',
 }
 
 export function TabContent({ tabId }: TabContentProps): React.ReactElement {
@@ -61,6 +74,26 @@ export function TabContent({ tabId }: TabContentProps): React.ReactElement {
       <TabErrorBoundary key={tab.id} sessionId={tab.sessionId}>
         <PreviewTabContent sessionId={tab.sessionId} />
       </TabErrorBoundary>
+    )
+  }
+
+  // ===== Nanju 平台扩展分支（architecture.md §4.1，sprint-plan S1-T1.6）=====
+
+  // 快消型工作区：左聊天 + 右预览占位（Sprint 1 真实骨架）
+  if (tab.type === 'quick-workspace') {
+    return <QuickWorkspace />
+  }
+
+  // 占位：长期迭代型工作区 / 我的项目 / 分析看板（后续 Sprint 实现真实组件）
+  if (
+    tab.type === 'long-workspace' ||
+    tab.type === 'project-list' ||
+    tab.type === 'analytics'
+  ) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+        {NANJU_TAB_PLACEHOLDER_LABEL[tab.type]}
+      </div>
     )
   }
 
