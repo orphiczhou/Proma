@@ -8,6 +8,7 @@
 import type { AgentSessionMeta, PromaPermissionMode } from '@proma/shared'
 import { injectAgentCollaborationMcpServer } from '../agent-collaboration-tools'
 import { injectAutomationMcpServer } from '../automation-agent-tools'
+import { injectSessionMcpServer } from '../session-agent-tools'
 import { injectNanoBananaMcpServer } from '../chat-tools/nano-banana-mcp'
 import { isBuiltinMcpUserEnabled } from './settings'
 
@@ -52,6 +53,15 @@ export async function injectBuiltinMcpServers(ctx: BuiltinMcpInjectContext): Pro
       triggeredBy: ctx.triggeredBy,
     }))
   }
+
+  // Session MCP：暴露 Agent 会话管理工具（list/get/fork/send_message）
+  // 让 Agent 可在内部编排会话。默认开启（无外部依赖）。
+  await injectBuiltinSafely('session', () => injectSessionMcpServer(ctx.sdk, ctx.mcpServers, {
+    sessionId: ctx.sessionId,
+    workspaceSlug: ctx.workspaceSlug,
+    channelId: ctx.channelId,
+    modelId: ctx.modelId,
+  }))
 
   const collaborationAvailable = isBuiltinMcpUserEnabled('collaboration') &&
     !!ctx.workspaceId &&

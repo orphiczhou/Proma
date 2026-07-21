@@ -21,8 +21,28 @@ import type { PreviewFile } from './preview-atoms'
 
 // ===== 类型定义 =====
 
-/** 标签页类型（Settings 不作为 Tab，保留独立视图） */
-export type TabType = 'chat' | 'agent' | 'scratch' | 'preview' | 'tutorial'
+/**
+ * 标签页类型（Settings 不作为 Tab，保留独立视图）。
+ *
+ * Nanju 平台新增类型（architecture.md §4.1 扩展点，sprint-plan S1-T1.6）：
+ *   - 'quick-workspace'  快消型工作区（QUICK_WORKSPACE，左聊天 + 右预览双区）
+ *   - 'long-workspace'   长期迭代型工作区（LONG_WORKSPACE，三区布局，S1-T3.5）
+ *   - 'project-list'     我的项目（PROJECT_LIST，S1-T8）
+ *   - 'analytics'        分析看板（ANALYTICS，S2-T8）
+ *
+ * 注：Nanju 类型暂不参与 openTab/closeTab 生命周期（非会话 tab，无 sessionId 语义），
+ * 由 nanjuPhaseAtom 等独立导航/视图状态驱动；会话路由接线见 S1-T2.4 / S1-T1.7。
+ */
+export type TabType =
+  | 'chat'
+  | 'agent'
+  | 'scratch'
+  | 'preview'
+  | 'tutorial'
+  | 'quick-workspace'
+  | 'long-workspace'
+  | 'project-list'
+  | 'analytics'
 
 /** Scratch Pad 专用的固定 sessionId */
 export const SCRATCH_PAD_ID = '__scratch-pad__'
@@ -210,12 +230,32 @@ export function isPreviewTab(tab: TabItem): boolean {
   return tab.type === 'preview' || tab.id.startsWith(PREVIEW_TAB_PREFIX)
 }
 
+/**
+ * 是否为 Nanju 平台新增的非会话 Tab（architecture.md §4.1）。
+ * 这些类型不参与 openTab/closeTab 生命周期与持久化（由 nanjuPhaseAtom 等视图状态驱动），
+ * 必须从持久化、会话绑定等既有逻辑中排除，防止未来 Sprint 误把 nanju tab 写入 settings.json。
+ */
+export function isNanjuTab(tab: TabItem): boolean {
+  return (
+    tab.type === 'quick-workspace' ||
+    tab.type === 'long-workspace' ||
+    tab.type === 'project-list' ||
+    tab.type === 'analytics'
+  )
+}
+
 function isSessionTab(tab: TabItem): boolean {
   return tab.type === 'chat' || tab.type === 'agent'
 }
 
 function getPersistentTabs(tabs: TabItem[]): TabItem[] {
-  return tabs.filter((tab) => tab.id !== SCRATCH_PAD_ID && tab.id !== TUTORIAL_TAB_ID && !isPreviewTab(tab))
+  return tabs.filter(
+    (tab) =>
+      tab.id !== SCRATCH_PAD_ID &&
+      tab.id !== TUTORIAL_TAB_ID &&
+      !isPreviewTab(tab) &&
+      !isNanjuTab(tab),
+  )
 }
 
 export function getPersistableTabState(
